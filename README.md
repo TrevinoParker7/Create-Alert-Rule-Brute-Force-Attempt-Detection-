@@ -11,6 +11,19 @@ Create a **Sentinel Scheduled Query Rule** in Log Analytics to detect when the s
 
 ---
 
+## Platforms and Languages Leveraged
+- Microsoft Sentinel
+- EDR Platform: Microsoft Defender for Endpoint
+- Kusto Query Language (KQL)
+- Windows 10 Virtual Machines (Microsoft Azure)
+---
+### High-Level Discovery Plan
+
+- **Check `DeviceLogonEvents`** for any query to check if any of these IP addresses successfully logged in
+- **Check `DeviceFileEvents`** for any file events.
+- **Check `DeviceProcessEvents`** for any signs of installation or usage.
+- **Check `DeviceNetworkEvents`** for any signs of outgoing connections.
+---
 ## 🛠️ **Analysis**
 ### Observations:
 Three different virtual machines were potentially impacted by brute force attempts from two distinct public IP addresses:  
