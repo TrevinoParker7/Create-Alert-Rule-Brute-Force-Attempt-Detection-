@@ -6,6 +6,9 @@
 
 # 🚨 Incident Response: Brute Force Attempt Detection
 
+![image](https://github.com/user-attachments/assets/078932c1-3e7e-48cf-a0c1-1cd787336ce6)
+
+
 ## 🔍 **Objective**
 Create a **Sentinel Scheduled Query Rule** in Log Analytics to detect when the same remote IP address fails to log in to the same local host (Azure VM) 10 times or more within the last 5 hours.
 
