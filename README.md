@@ -17,7 +17,7 @@ My goal is to investigate, detect, and mitigate this potential threat in complia
 
 ---
 
-## 🔍 **Objective: Create Sentinel Scheduled Query Rule**
+## 🔍 **Objective: Find Brute Force and Create Sentinel Scheduled Query Rule**
 Implement a **Sentinel Scheduled Query Rule** using KQL in Log Analytics to detect when the same remote IP address fails to log in to the same Azure VM 10+ times within a 5-hour period.
 
 ---
@@ -50,23 +50,33 @@ Implement a **Sentinel Scheduled Query Rule** using KQL in Log Analytics to dete
 
 ### 2️⃣ Detection & Analysis
 #### Observations:
-- **Three Azure VMs** were targeted by brute force attempts from **two public IPs**:
+
+```kql
+DeviceLogonEvents
+| where TimeGenerated >= ago(5h)
+| where ActionType == "LogonFailed"
+| summarize NumberOfFailures = count() by RemoteIP, ActionType, DeviceName
+| where NumberOfFailures >= 10
+```
+![Screenshot 2025-01-13 182228](https://github.com/user-attachments/assets/d69ebc60-597d-4c13-8ef2-20b19b7a3778)
+
+
+- **Three Azure VMs** were targeted by brute force attempts from **three public IPs**:
   
   | **Remote IP**       | **Failed Attempts** | **Target Machine**    |
   |---------------------|---------------------|-----------------------|
-  | `194.180.48.18`     | 21                  | `windows-target-1`    |
-  | `194.180.48.11`     | 20                  | `windows-target-1`    |
-  | `113.56.218.168`    | 40                  | `windowsvm-mde-c`     |
+  | `87.120.127.241`    | 116                 | `linux-agent-scan-sam`    |
+  | `194.0.234.44`     | 100                 | `bennyvirtual`    |
+  | `10.0.0.8`    | 22, 20                 | `windows-server,ryan-final-lab `     |
 
 ![Screenshot 2025-01-06 181511](https://github.com/user-attachments/assets/3134d542-b44d-4036-b2ce-1827bc7dda88)
 
 - KQL Query to detect failed logins:  
   ```kql
   DeviceLogonEvents
-  | where RemoteIP in ("194.180.48.18", "113.56.218.168")
+  | where RemoteIP in ("87.120.127.241", "194.0.234.44", "10.0.0.8" )
   | where ActionType != "LogonFailed"
   ```
-![Screenshot 2025-01-06 194510](https://github.com/user-attachments/assets/bb7e5332-447c-4328-82a3-a34f5aadcd23)
 
   **Result:** No successful logins from these IPs were detected.
 
@@ -83,8 +93,6 @@ Implement a **Sentinel Scheduled Query Rule** using KQL in Log Analytics to dete
    - **Low Priority:** Isolated, user-specific failed attempts.
 
 ---
-
-![Screenshot 2025-01-06 190209](https://github.com/user-attachments/assets/2bd0cec0-9b56-4042-a9cf-d751ddd3d0d1)
 
 ### 3️⃣ Containment
 #### Immediate Actions:
@@ -124,9 +132,98 @@ Implement a **Sentinel Scheduled Query Rule** using KQL in Log Analytics to dete
 
 3. **Documentation:**
    - Recorded all findings, actions taken, and future recommendations.
+---
+
+### **Step 1: Create-Alert-Rule** 
+how to create a alert rule in Microsoft Sentinel , go to Microsoft Sentinel, click on your group, click on configuration, click on Analytics, click create with the + beside it , click scheduled query rule
+After clicking **"Scheduled query rule"**, you’ll see the **Analytics rule details** tab. Fill in the following fields:
+
+1. **Name**:  
+   - Enter a name for your rule, e.g., **"🔥 Brute Force Attack Detection 🔐"**.
+
+2. **Description**:  
+   - Add a brief description of what the rule does, e.g.,  
+     *"🔍 This rule detects potential brute-force login attempts based on failed sign-ins exceeding a defined threshold."*
+
+3. **Severity**:  
+   - Choose a severity level:
+     - **Low** 🟢
+     - **Medium** 🟡
+     - **High** 🔴 (Recommended for brute force detection)
+
+4. **Tactics**:  
+   - Select the **MITRE ATT&CK Tactics** related to brute force:
+     - **🎯 Initial Access**
+     - **🔑 Credential Access**
+
+5. **Rule type**:  
+   - Select **Scheduled 🕒**.
+
+6. **Set rule frequency**:  
+   - Choose how often the query should run (e.g., **Every 5 minutes ⏱️**).
+
+7. **Set query results to look back**:  
+   - Define the time window for the query (e.g., **Last 1 hour ⏳**).
 
 ---
 
+### **Step 2: Add the KQL Query**  
+In the **Set rule query** step, paste your KQL query to detect brute-force attempts:  
+
+```kql
+SigninLogs
+| where ResultType == "50126" or ResultType == "50125" // ❌ Authentication errors
+| summarize FailedAttempts = count() by IPAddress, Account, bin(TimeGenerated, 1h)
+| where FailedAttempts > 5 // ⚠️ Adjust threshold as needed
+| project TimeGenerated, IPAddress, Account, FailedAttempts
+```
+
+- 🛠️ This query filters **sign-in logs** for failed login attempts and identifies unusual patterns.  
+- 💡 Adjust thresholds based on your environment (e.g., `> 5 failed attempts`).
+
+---
+
+### **Step 3: Define Incident Settings**  
+1. **Create incidents based on alert results**: Ensure this is selected ✅.  
+2. **Group alerts into incidents**:  
+   - Choose **"🧩 Grouped into a single incident if they share the same entities"** to avoid duplicates.
+
+---
+
+### **Step 4: Add Actions and Automation**  
+1. Configure **actions** to trigger when the rule is activated:  
+   - Add a **Playbook 🛠️** for automated responses, such as:  
+     - Blocking an IP 🚫.  
+     - Sending an email to your security team 📧.  
+     - Triggering a Teams or Slack notification 💬.  
+
+2. Example Playbook: A Logic App that sends an **email notification 📤** to the SOC.
+
+---
+
+### **Step 5: Review and Enable**  
+1. **Review everything** to ensure it’s correct:
+   - Name 🔖, description 📝, KQL query 📊, frequency ⏱️, and action settings ⚙️.  
+
+2. Click **"Create"** to enable the rule 🎉.  
+
+---
+
+### **Step 6: Validate Your Rule**  
+1. Test the rule by simulating a brute-force attack or using sample logs:
+   - Run a script that triggers **failed login attempts** (simulated safely) 🧑‍💻.
+   - Replay historical logs using KQL 📜.
+
+2. Verify that alerts are generated 🚨 and incidents are grouped as expected ✅.  
+
+---
+
+### **Bonus Tip**  
+Use emojis in the **rule name or description** to make it visually stand out in the Analytics dashboard:  
+- Example: **"🚨 Brute Force Detection (Failed Logins) 🔐"**  
+
+Let me know if you'd like more tips or want to refine the process! 🌟
+---
 ## 🚫 **Outcome**
 - **Attack Status:** Brute force attempts **unsuccessful**.  
 - **Recommendations:** Lockdown NSG rules for all VMs and enforce MFA on privileged accounts.
@@ -134,8 +231,6 @@ Implement a **Sentinel Scheduled Query Rule** using KQL in Log Analytics to dete
 🎉 **Status:** Incident resolved. No further action required.
 
 ---
-
-![Screenshot 2025-01-06 193306](https://github.com/user-attachments/assets/8e45d194-40df-4058-8f2d-ee56a1cfc10b)
 
 **Post-Incident Image**
 
