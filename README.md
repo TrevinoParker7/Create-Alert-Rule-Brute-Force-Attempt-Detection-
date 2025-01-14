@@ -155,6 +155,8 @@ After clicking **"Scheduled query rule"**, you’ll see the **Analytics rule det
    - Select the **MITRE ATT&CK Tactics** related to brute force:
      - **🎯 Initial Access**
      - **🔑 Credential Access**
+      
+![Screenshot 2025-01-14 103734](https://github.com/user-attachments/assets/f6558c4d-585b-4e63-b787-1cc071cc0ad0)
 
 5. **Rule type**:  
    - Select **Scheduled 🕒**.
@@ -177,6 +179,7 @@ DeviceLogonEvents
 | summarize NumberOfFailures = count() by RemoteIP, ActionType, DeviceName
 | where NumberOfFailures >= 10s
 ```
+![Screenshot 2025-01-14 111832](https://github.com/user-attachments/assets/b1164c0f-6022-444e-a409-43c1d4e9a579)
 
 - 🛠️ This query filters **sign-in logs** for failed login attempts and identifies unusual patterns.  
 - 💡 Adjust thresholds based on your environment (e.g., `> 5 failed attempts`).
