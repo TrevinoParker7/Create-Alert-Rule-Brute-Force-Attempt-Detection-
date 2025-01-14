@@ -171,11 +171,11 @@ After clicking **"Scheduled query rule"**, you’ll see the **Analytics rule det
 In the **Set rule query** step, paste your KQL query to detect brute-force attempts:  
 
 ```kql
-SigninLogs
-| where ResultType == "50126" or ResultType == "50125" // ❌ Authentication errors
-| summarize FailedAttempts = count() by IPAddress, Account, bin(TimeGenerated, 1h)
-| where FailedAttempts > 5 // ⚠️ Adjust threshold as needed
-| project TimeGenerated, IPAddress, Account, FailedAttempts
+DeviceLogonEvents
+| where TimeGenerated >= ago(5h)
+| where ActionType == "LogonFailed"
+| summarize NumberOfFailures = count() by RemoteIP, ActionType, DeviceName
+| where NumberOfFailures >= 10s
 ```
 
 - 🛠️ This query filters **sign-in logs** for failed login attempts and identifies unusual patterns.  
