@@ -215,14 +215,6 @@ DeviceLogonEvents
    - Replay historical logs using KQL 📜.
 
 2. Verify that alerts are generated 🚨 and incidents are grouped as expected ✅.  
-
----
-
-### **Bonus Tip**  
-Use emojis in the **rule name or description** to make it visually stand out in the Analytics dashboard:  
-- Example: **"🚨 Brute Force Detection (Failed Logins) 🔐"**  
-
-Let me know if you'd like more tips or want to refine the process! 🌟
 ---
 ## 🚫 **Outcome**
 - **Attack Status:** Brute force attempts **unsuccessful**.  
@@ -231,8 +223,4 @@ Let me know if you'd like more tips or want to refine the process! 🌟
 🎉 **Status:** Incident resolved. No further action required.
 
 ---
-
-**Post-Incident Image**
-
---- 
 
