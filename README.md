@@ -50,7 +50,18 @@ Implement a **Sentinel Scheduled Query Rule** using KQL in Log Analytics to dete
 
 ### 2️⃣ Detection & Analysis
 #### Observations:
-
+```kql
+DeviceFileEvents
+| top 20 by Timestamp desc
+```
+```kql
+DeviceNetworkEvents
+| top 20 by Timestamp desc
+```
+```kql
+DeviceProcessEvents
+| top 20 by Timestamp desc
+```
 ```kql
 DeviceLogonEvents
 | where TimeGenerated >= ago(5h)
